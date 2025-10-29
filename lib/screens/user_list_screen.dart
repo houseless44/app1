@@ -3,14 +3,14 @@ import '../models/user_model.dart';
 import '../services/user_service.dart';
 import '../widgets/user_card.dart';
 
-class UserListScreen extends StatefulWidget {
-  const UserListScreen({super.key});
+class UserListBody extends StatefulWidget {
+  const UserListBody({super.key});
 
   @override
-  State<UserListScreen> createState() => _UserListScreenState();
+  State<UserListBody> createState() => _UserListBodyState();
 }
 
-class _UserListScreenState extends State<UserListScreen> {
+class _UserListBodyState extends State<UserListBody> {
   final UserService _userService = UserService();
 
   String _searchQuery = '';
@@ -102,65 +102,69 @@ class _UserListScreenState extends State<UserListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Danh sách người dùng'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.sort),
-            onPressed: _openSortOptions,
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm theo tên hoặc email...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+    return Column(
+      children: [
+        // 🔍 Thanh tìm kiếm + sắp xếp
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Tìm kiếm theo tên hoặc email...',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() => _searchQuery = value);
+                  },
                 ),
               ),
-              onChanged: (value) {
-                setState(() => _searchQuery = value);
-              },
-            ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.sort, color: Colors.blueAccent),
+                onPressed: _openSortOptions,
+              ),
+            ],
           ),
         ),
-      ),
-      body: StreamBuilder<List<AppUser>>(
-        stream: _userService.getUsers(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
 
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('Chưa có người dùng nào'));
-          }
+        // 📋 Danh sách người dùng
+        Expanded(
+          child: StreamBuilder<List<AppUser>>(
+            stream: _userService.getUsers(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          // 💡 Không gọi setState ở đây
-          final filteredUsers = _applyFilters(snapshot.data!);
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('Chưa có người dùng nào'));
+              }
 
-          if (filteredUsers.isEmpty) {
-            return const Center(child: Text('Không tìm thấy người dùng nào.'));
-          }
+              final filteredUsers = _applyFilters(snapshot.data!);
 
-          return ListView.builder(
-            itemCount: filteredUsers.length,
-            itemBuilder: (context, index) {
-              return UserCard(user: filteredUsers[index]);
+              if (filteredUsers.isEmpty) {
+                return const Center(child: Text('Không tìm thấy người dùng nào.'));
+              }
+
+              return ListView.builder(
+                itemCount: filteredUsers.length,
+                itemBuilder: (context, index) {
+                  return UserCard(user: filteredUsers[index]);
+                },
+              );
             },
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 }
