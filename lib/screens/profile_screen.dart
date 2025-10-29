@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart'; // nhớ import màn hình đăng nhập của bạn
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -31,6 +32,15 @@ class ProfileScreen extends StatelessWidget {
             ),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
+
+              // Điều hướng về màn hình đăng nhập
+              if (context.mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
             icon: const Icon(Icons.logout),
             label: const Text('Đăng xuất'),
