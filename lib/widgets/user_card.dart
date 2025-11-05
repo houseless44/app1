@@ -5,8 +5,14 @@ import '../screens/edit_user_screen.dart';
 import '../services/user_service.dart';
 
 class UserCard extends StatelessWidget {
+  final String userId; // 🔹 ID document Firestore
   final AppUser user;
-  const UserCard({super.key, required this.user});
+
+  const UserCard({
+    super.key,
+    required this.userId,
+    required this.user,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +21,7 @@ class UserCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Slidable(
-        key: ValueKey(user.id),
+        key: ValueKey(userId),
 
         // 👉 Vuốt sang trái để hiển thị các hành động
         endActionPane: ActionPane(
@@ -27,7 +33,7 @@ class UserCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => EditUserScreen(user: user),
+                    builder: (_) => EditUserScreen(userId: userId, user: user),
                   ),
                 );
               },
@@ -58,7 +64,7 @@ class UserCard extends StatelessWidget {
                 );
 
                 if (confirm == true) {
-                  await userService.deleteUser(user.id!, imageUrl: user.imageUrl);
+                  await userService.deleteUser(userId, imageUrl: user.imageUrl);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Đã xoá người dùng "${user.username}"')),
                   );
@@ -81,12 +87,12 @@ class UserCard extends StatelessWidget {
             title: Text(user.username),
             subtitle: Text(user.email),
 
-            // 🟢 Thêm onTap để chuyển đến màn hình chỉnh sửa
+            // 🟢 Chuyển đến màn hình chỉnh sửa khi nhấn vào
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => EditUserScreen(user: user),
+                  builder: (_) => EditUserScreen(userId: userId, user: user),
                 ),
               );
             },

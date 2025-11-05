@@ -52,9 +52,8 @@ class _AddUserScreenState extends State<AddUserScreen> {
         imageUrl = await cloudinaryService.uploadImage(_selectedImage!);
       }
 
-      // 👤 Tạo object người dùng
+      // 👤 Tạo object người dùng (model mới)
       final newUser = AppUser(
-        id: '',
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -76,9 +75,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isUploading = false);
-      }
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
@@ -182,10 +179,13 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                      _obscureConfirmPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
-                      setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                      setState(() =>
+                          _obscureConfirmPassword = !_obscureConfirmPassword);
                     },
                   ),
                 ),

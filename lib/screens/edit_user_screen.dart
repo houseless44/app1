@@ -6,9 +6,14 @@ import '../services/user_service.dart';
 import '../services/cloudinary_service.dart';
 
 class EditUserScreen extends StatefulWidget {
+  final String userId; // 🔑 ID của document trong Firestore
   final AppUser user;
 
-  const EditUserScreen({super.key, required this.user});
+  const EditUserScreen({
+    super.key,
+    required this.userId,
+    required this.user,
+  });
 
   @override
   State<EditUserScreen> createState() => _EditUserScreenState();
@@ -46,7 +51,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     super.dispose();
   }
 
-  // 📸 Chọn ảnh mới từ thư viện
+  /// 📸 Chọn ảnh mới từ thư viện
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
@@ -57,7 +62,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     }
   }
 
-  // 💾 Cập nhật người dùng
+  /// 💾 Cập nhật người dùng
   Future<void> _updateUser() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -75,17 +80,18 @@ class _EditUserScreenState extends State<EditUserScreen> {
       // 🔐 Nếu người dùng đổi mật khẩu → dùng mật khẩu mới
       final updatedPassword = _changePassword
           ? _newPasswordController.text.trim()
-          : widget.user.password; // Giữ hash cũ nếu không đổi
+          : widget.user.password;
 
+      // 🧩 Tạo bản ghi người dùng mới
       final updatedUser = AppUser(
-        id: widget.user.id,
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         password: updatedPassword,
         imageUrl: imageUrl,
       );
 
-      await userService.updateUser(updatedUser);
+      // 🔥 Cập nhật lên Firestore
+      await userService.updateUserById(widget.userId, updatedUser);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -94,11 +100,15 @@ class _EditUserScreenState extends State<EditUserScreen> {
         Navigator.pop(context, updatedUser);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Lỗi khi cập nhật: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Lỗi khi cập nhật: $e')),
+        );
+      }
     } finally {
-      setState(() => _isUpdating = false);
+      if (mounted) {
+        setState(() => _isUpdating = false);
+      }
     }
   }
 
@@ -108,7 +118,8 @@ class _EditUserScreenState extends State<EditUserScreen> {
         ? FileImage(_newImageFile!)
         : (widget.user.imageUrl != null && widget.user.imageUrl!.isNotEmpty
             ? NetworkImage(widget.user.imageUrl!)
-            : const AssetImage('assets/avatar_placeholder.png')) as ImageProvider;
+            : const AssetImage('assets/avatar_placeholder.png'))
+            as ImageProvider;
 
     return Scaffold(
       appBar: AppBar(
@@ -155,8 +166,13 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                    (value == null || !value.contains('@')) ? 'Email không hợp lệ' : null,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Không được để trống';
+                  if (!RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch(value)) {
+                    return 'Email không hợp lệ';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 20),
 
@@ -234,8 +250,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     ? const SizedBox(
                         width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.save),
-                label:
-                    Text(_isUpdating ? 'Đang cập nhật...' : 'Cập nhật người dùng'),
+                label: Text(_isUpdating ? 'Đang cập nhật...' : 'Cập nhật người dùng'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
                   minimumSize: const Size.fromHeight(50),
